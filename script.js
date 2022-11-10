@@ -15,7 +15,8 @@ var HEIGHT, WIDTH;
 var left = 0,
   right = 0,
   velocity = 0,
-  airplane;
+  airplane,
+  wall1;
 
 //SCENE
 function createScene() {
@@ -37,7 +38,7 @@ function createScene() {
   camera.position.x = 0;
   camera.position.z = 200;
   camera.position.y = 0;
-  (camera.lookAt = 0), 0, 0;
+  camera.lookAt = 0, 0, 0;
 
   renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(WIDTH, HEIGHT);
@@ -137,22 +138,52 @@ class Airplane {
       velocity = left + right;
     });
 
-
     // update the x position of the player
     this.mesh.position.x += velocity;
 
-
     // keep the player is in bounds - x = ~+/-102
-    if(this.mesh.position.x > 102){
+    if (this.mesh.position.x > 102) {
       this.mesh.position.x = 102;
-    }
-    else if(this.mesh.position.x < -102){
+    } else if (this.mesh.position.x < -102) {
       this.mesh.position.x = -102;
     }
+
+
+    // move the camera with the player
+    camera.position.x = this.mesh.position.x;
   }
 }
 
-class Obsticle {}
+class Obsticle {
+  constructor() {
+    this.mesh = new THREE.Object3D();
+    var geometry = new THREE.BoxGeometry(10, 200, 1);
+    var material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    var wall = new THREE.Mesh(geometry, material);
+    wall.position.set(0, 0, -200);
+    this.mesh.add(wall);
+    
+  }
+
+  respawn(){
+    // Math.round(Math.random()) will give you 0 or 1
+    // Multiplying the result by 2 will give you 0 or 2
+    // And then subtracting 1 gives you -1 or 1.
+    // Then get random number between 0 and 100 and multiply by +/-1
+    var posORneg = Math.round(Math.random()) * 2 - 1;
+    var randomX = (Math.floor(Math.random() *100))*posORneg;
+    this.mesh.position.x = randomX;
+  }
+
+  move(){
+    this.mesh.position.z +=1;
+    // Respawn wall when it reaches front of screen
+    if(this.mesh.position.z >= 350){
+      this.mesh.position.z = -200;
+      this.respawn();
+    }
+  }
+}
 
 function createPlane() {
   airplane = new Airplane();
@@ -163,11 +194,20 @@ function createPlane() {
   scene.add(airplane.mesh);
 }
 
+function createWalls() {
+  wall1 = new Obsticle();
+  scene.add(wall1.mesh);
+  wall1.respawn();
+  //let walls = [new Obsticle()];
+  //scene.add(walls[0]);
+}
+
 function animate() {
   // Render the scene and camera
-  renderer.render(scene, camera);
+  renderer.render(scene, camera); 
 
   airplane.move();
+  wall1.move();
 
   requestAnimationFrame(animate);
 }
@@ -178,6 +218,7 @@ function init(event) {
   createPlane();
   createSea();
   //createSky();
+  createWalls();
 
   animate();
 }
