@@ -15,8 +15,8 @@ var HEIGHT, WIDTH;
 var left = 0,
   right = 0,
   velocity = 0,
-  airplane,
-  wall1;
+  airplane;
+var walls = [];
 
 //SCENE
 function createScene() {
@@ -195,11 +195,16 @@ function createPlane() {
 }
 
 function createWalls() {
-  wall1 = new Obsticle();
-  scene.add(wall1.mesh);
-  wall1.respawn();
-  //let walls = [new Obsticle()];
-  //scene.add(walls[0]);
+  var counter = 0;
+  
+  setInterval(() => {
+    if(walls.length < 10){
+      walls.push(new Obsticle());
+      scene.add(walls[counter].mesh);
+      walls[counter].respawn();
+      counter++;
+    }
+  }, 1000) 
 }
 
 function animate() {
@@ -207,7 +212,9 @@ function animate() {
   renderer.render(scene, camera); 
 
   airplane.move();
-  wall1.move();
+  walls.forEach(wall => {
+    wall.move();
+  });
 
   requestAnimationFrame(animate);
 }
