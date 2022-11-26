@@ -15,6 +15,9 @@ var HEIGHT, WIDTH;
 var left = 0,
   right = 0,
   velocity = 0,
+  score = 0,
+  finalScore = 0,
+  collision = false,
   airplane;
 var walls = [];
 
@@ -38,7 +41,7 @@ function createScene() {
   camera.position.x = 0;
   camera.position.z = 200;
   camera.position.y = 0;
-  camera.lookAt = 0, 0, 0;
+  (camera.lookAt = 0), 0, 0;
 
   renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(WIDTH, HEIGHT);
@@ -148,9 +151,28 @@ class Airplane {
       this.mesh.position.x = -102;
     }
 
-
     // move the camera with the player
     camera.position.x = this.mesh.position.x;
+
+    //Increase score as plane moves
+    score++;
+    //Add score to screen with html
+    document.getElementById("Score").innerHTML = "Score: " + score;
+  }
+
+  crash() {
+    finalScore = score;
+    collision = true;
+    scene.remove(airplane.mesh);
+    document.getElementById("gameover").style.display = "block";
+  }
+
+  getHitboxLeft() {
+    return this.mesh.position.x - 10;
+  }
+
+  getHitboxRight() {
+    return this.mesh.position.x + 10;
   }
 }
 
@@ -162,25 +184,42 @@ class Obsticle {
     var wall = new THREE.Mesh(geometry, material);
     wall.position.set(0, 0, -200);
     this.mesh.add(wall);
-    
+
+    this.speed = 1;
   }
 
-  respawn(){
-    // Math.round(Math.random()) will give you 0 or 1
-    // Multiplying the result by 2 will give you 0 or 2
-    // And then subtracting 1 gives you -1 or 1.
-    // Then get random number between 0 and 100 and multiply by +/-1
+  // Respawns the wall back in front of the player at a random x position
+  respawn() {
+    // Math.round(Math.random()) will give you 0 or 1, Multiplying the result by 2 will give you 0 or 2
+    // And then subtracting 1 gives you -1 or 1. Then get random number between 0 and 100 and multiply by +/-1
     var posORneg = Math.round(Math.random()) * 2 - 1;
-    var randomX = (Math.floor(Math.random() *100))*posORneg;
+    var randomX = Math.floor(Math.random() * 100) * posORneg;
     this.mesh.position.x = randomX;
   }
 
-  move(){
-    this.mesh.position.z +=1;
+  move() {
+    this.mesh.position.z += this.speed;
     // Respawn wall when it reaches front of screen
-    if(this.mesh.position.z >= 350){
+    if (this.mesh.position.z >= 400) {
       this.mesh.position.z = -200;
       this.respawn();
+    }
+  }
+
+  collisionDetect(airplane) {
+    this.hitboxLeft = this.mesh.position.x - 5;
+    this.hitboxRight = this.mesh.position.x + 5;
+
+    // Check if z coord is the same(airplane z position won't change)
+    if (this.mesh.position.z >= 300 && this.mesh.position.z <= 310) {
+      // Check if x coord collision
+      if (
+        this.hitboxLeft < airplane.getHitboxRight() &&
+        this.hitboxRight > airplane.getHitboxLeft()
+      ) {
+        airplane.crash();
+        console.log("collision");
+      }
     }
   }
 }
@@ -196,24 +235,52 @@ function createPlane() {
 
 function createWalls() {
   var counter = 0;
-  
+
   setInterval(() => {
-    if(walls.length < 10){
+    if (walls.length < 10) {
       walls.push(new Obsticle());
       scene.add(walls[counter].mesh);
       walls[counter].respawn();
       counter++;
     }
-  }, 1000) 
+  }, 1000);
+}
+
+function restart() {
+  scene.add(airplane.mesh);
+  score = 0;
+  collision = false;
+  document.getElementById("gameover").style.display = "none";
+  // delete walls
+  // for (var i = walls.length; i > 0; i--) {
+  //   scene.remove(walls[i].mesh);
+  //   walls.pop();
+  //   console.log(i);
+  //   counter = 0;
+  // }
 }
 
 function animate() {
   // Render the scene and camera
-  renderer.render(scene, camera); 
+  renderer.render(scene, camera);
 
-  airplane.move();
-  walls.forEach(wall => {
+  // If statement to stop airplane.move being called when collision is detected
+  if (!collision) {
+    airplane.move();
+  }
+
+  walls.forEach((wall) => {
     wall.move();
+    wall.collisionDetect(airplane);
+  });
+
+  // Respawn the airplane and reset the score when space is pressed after a collision
+  document.addEventListener("keydown", function (event) {
+    let key = event.key.toLowerCase();
+
+    if (key == " " && collision == true) {
+      restart();
+    }
   });
 
   requestAnimationFrame(animate);
@@ -227,6 +294,7 @@ function init(event) {
   //createSky();
   createWalls();
 
+  document.getElementById("gameover").style.display = "none";
   animate();
 }
 
