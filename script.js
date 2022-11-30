@@ -9,7 +9,7 @@ var scene,
   container;
 
 //SCREEN VARIABLES
-var HEIGHT, WIDTH;
+var HEIGHT, WIDTH, ambientLight, hemisphereLight, shadowLight;
 
 // GAME VARIABLES
 var left = 0,
@@ -26,33 +26,38 @@ function createScene() {
   HEIGHT = window.innerHeight;
   WIDTH = window.innerWidth;
 
+  // setup scene with fog
   scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
+
+  // setup camera
   aspectRatio = WIDTH / HEIGHT;
   fieldOfView = 60;
   nearPlane = 1;
-  farPlane = 10000;
+  farPlane = 1000;
   camera = new THREE.PerspectiveCamera(
     fieldOfView,
     aspectRatio,
     nearPlane,
     farPlane
   );
-  scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
   camera.position.x = 0;
   camera.position.z = 200;
   camera.position.y = 0;
-  (camera.lookAt = 0), 0, 0;
+  camera.lookAt(0,0,0);
 
+  // setup renderer
+  // alpha true sets the backgroung to be transparent allowing the css to show
+  // antialias true to smooth the edges
   renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(WIDTH, HEIGHT);
   renderer.shadowMap.enabled = true;
+  // add the css and the renderer to the scene
   container = document.getElementById("world");
   container.appendChild(renderer.domElement);
 }
 
 // LIGHTS
-var ambientLight, hemisphereLight, shadowLight;
-
 function createLights() {
   hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 0.9);
   shadowLight = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -67,6 +72,10 @@ function createLights() {
   shadowLight.shadow.mapSize.width = 2048;
   shadowLight.shadow.mapSize.height = 2048;
 
+
+  var helper = new THREE.CameraHelper(shadowLight.shadow.camera);
+      scene.add(helper);
+
   scene.add(hemisphereLight);
   scene.add(shadowLight);
 }
@@ -76,6 +85,7 @@ function createSea() {
   const planeGeometry = new THREE.BoxGeometry(1000, 10, 5000);
   const planeMaterial = new THREE.MeshLambertMaterial({ color: "blue" });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  plane.receiveShadow = true;
   scene.add(plane);
   plane.position.y = -50;
 }
@@ -183,6 +193,8 @@ class Obsticle {
     var material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
     var wall = new THREE.Mesh(geometry, material);
     wall.position.set(0, 0, -200);
+    this.mesh.castShadow = true;
+    this.mesh.receiveShadow = true;
     this.mesh.add(wall);
 
     this.speed = 1;
@@ -230,6 +242,8 @@ function createPlane() {
   airplane.mesh.position.x = 0;
   airplane.mesh.position.y = -15;
   airplane.mesh.position.z = 100;
+  airplane.mesh.castShadow = true;
+  airplane.mesh.recieveShadow = true;
   scene.add(airplane.mesh);
 }
 
