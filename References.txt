@@ -1,0 +1,10 @@
+https://tympanus.net/codrops/2016/04/26/the-aviator-animating-basic-3d-scene-threejs/
+This was the main tutorial I used. 
+I used it to help with setting up the scene and renderer with CSS.
+I also used it as a reference for what a good layout/structure of a larger
+game project's codebase looks like.
+
+I also used the threejs docs extensiely https://threejs.org/docs/
+
+https://www.w3.org/Style/Examples/007/center.en.html
+I used this tutorial for writing the score and Game Over html text on the screen
